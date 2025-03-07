@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <style>
+        /* Basic reset for margin and padding */
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Full-screen canvas styling */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1; /* Canvas should be behind the side panel */
+        }
+
+        /* Navbar styles */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background-color: #222;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 3; /* Ensure it stays on top of both canvas */
+        }
+
+        .navbar .title {
+            font-size: 20px;
+        }
+
+        /* Content area adjustments to avoid overlap */
+        .content {
+            margin-top: 50px; /* Space for navbar */
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Navbar</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Link</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Dropdown
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Action</a></li>
+                            <li><a class="dropdown-item" href="#">Another action</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Something else here</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">Tools</button>
+                    </li>
+                </ul>
+                <form class="d-flex" role="search">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-info" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    
+
+<div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Backdrop with scrolling</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <p>Try scrolling the rest of the page to see this option in action.</p>
+  </div>
+</div>
+
+    <!-- Canvas -->
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const ctx = canvas.getContext("2d");
+        requestAnimationFrame(update);
+        const mouse = { x: 0, y: 0, button: false, wheel: 0, lastX: 0, lastY: 0, drag: false };
+        const gridLimit = 64;  // max grid lines for static grid
+        const gridSize = 128;  // grid size in screen pixels for adaptive and world pixels for static
+        const scaleRate = 1.02; // Closer to 1 slower rate of change
+        const topLeft = { x: 0, y: 0 };  // holds top left of canvas in world coords.
+
+        function mouseEvents(e) {
+            const bounds = canvas.getBoundingClientRect();
+            mouse.x = e.pageX - bounds.left - scrollX;
+            mouse.y = e.pageY - bounds.top - scrollY;
+            mouse.button = e.type === "mousedown" ? true : e.type === "mouseup" ? false : mouse.button;
+            if (e.type === "wheel") {
+                mouse.wheel += -e.deltaY;
+                e.preventDefault();
+            }
+        }
+
+        ["mousedown", "mouseup", "mousemove"].forEach(name => document.addEventListener(name, mouseEvents));
+        document.addEventListener("wheel", mouseEvents, { passive: false });
+
+        const panZoom = {
+            x: 0,
+            y: 0,
+            scale: 1,
+            apply() { ctx.setTransform(this.scale, 0, 0, this.scale, this.x, this.y) },
+            scaleAt(x, y, sc) {  // x & y are screen coords, not world
+                this.scale *= sc;
+                this.x = x - (x - this.x) * sc;
+                this.y = y - (y - this.y) * sc;
+            },
+            toWorld(x, y, point = {}) {   // converts from screen coords to world coords
+                const inv = 1 / this.scale;
+                point.x = (x - this.x) * inv;
+                point.y = (y - this.y) * inv;
+                return point;
+            },
+        }
+
+        function drawGrid(gridScreenSize = 128, adaptive = true) {
+            var scale, gridScale, size, x, y, limitedGrid = false;
+            if (adaptive) {
+                scale = 1 / panZoom.scale;
+                gridScale = 2 ** (Math.log2(gridScreenSize * scale) | 0);
+                size = Math.max(w, h) * scale + gridScale * 2;
+                x = ((-panZoom.x * scale - gridScale) / gridScale | 0) * gridScale;
+                y = ((-panZoom.y * scale - gridScale) / gridScale | 0) * gridScale;
+            } else {
+                gridScale = gridScreenSize;
+                size = Math.max(w, h) / panZoom.scale + gridScale * 2;
+                panZoom.toWorld(0, 0, topLeft);
+                x = Math.floor(topLeft.x / gridScale) * gridScale;
+                y = Math.floor(topLeft.y / gridScale) * gridScale;
+                if (size / gridScale > gridLimit) {
+                    size = gridScale * gridLimit;
+                    limitedGrid = true;
+                }
+            }
+            panZoom.apply();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "#000";
+            ctx.beginPath();
+            for (i = 0; i < size; i += gridScale) {
+                ctx.moveTo(x + i, y);
+                ctx.lineTo(x + i, y + size);
+                ctx.moveTo(x, y + i);
+                ctx.lineTo(x + size, y + i);
+            }
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // reset the transform so the lineWidth is 1
+            ctx.stroke();
+        }
+
+        function drawPoint(x, y) {
+            const worldCoord = panZoom.toWorld(x, y);
+            panZoom.apply();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "red";
+            ctx.beginPath();
+            ctx.moveTo(worldCoord.x - 10, worldCoord.y);
+            ctx.lineTo(worldCoord.x + 10, worldCoord.y);
+            ctx.moveTo(worldCoord.x, worldCoord.y - 10);
+            ctx.lineTo(worldCoord.x, worldCoord.y + 10);
+            ctx.setTransform(1, 0, 0, 1, 0, 0); //reset the transform so the lineWidth is 1
+            ctx.stroke();
+        }
+
+        var w = canvas.width;
+        var h = canvas.height;
+
+        function update() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+            ctx.globalAlpha = 1;           // reset alpha
+            if (w !== innerWidth || h !== innerHeight) {
+                w = canvas.width = innerWidth;
+                h = canvas.height = innerHeight - 50; /* Adjust height to account for navbar */
+            } else {
+                ctx.clearRect(0, 0, w, h);
+            }
+            if (mouse.wheel !== 0) {
+                let scale = 1;
+                scale = mouse.wheel < 0 ? 1 / scaleRate : scaleRate;
+                mouse.wheel *= 0.8;
+                if (Math.abs(mouse.wheel) < 1) {
+                    mouse.wheel = 0;
+                }
+                panZoom.scaleAt(mouse.x, mouse.y, scale); //scale is the change in scale
+            }
+            if (mouse.button) {
+                if (!mouse.drag) {
+                    mouse.lastX = mouse.x;
+                    mouse.lastY = mouse.y;
+                    mouse.drag = true;
+                } else {
+                    panZoom.x += mouse.x - mouse.lastX;
+                    panZoom.y += mouse.y - mouse.lastY;
+                    mouse.lastX = mouse.x;
+                    mouse.lastY = mouse.y;
+                }
+            } else if (mouse.drag) {
+                mouse.drag = false;
+            }
+            // Always use the adaptive grid mode
+            drawGrid(gridSize, true);
+            drawPoint(mouse.x, mouse.y);
+            requestAnimationFrame(update);
+        }
+    </script>
+</body>
+
+</html>
