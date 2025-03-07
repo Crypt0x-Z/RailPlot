@@ -78,7 +78,11 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <button class="btn btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">Tools</button>
+                        <button class="btn btn-info mx-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions">Tools</button>
+                    </li>
+                    <!-- New refocus button -->
+                    <li class="nav-item">
+                        <button class="btn btn-warning mx-3" onclick="refocusCanvas()">Refocus Grid</button>
                     </li>
                 </ul>
                 <form class="d-flex" role="search">
@@ -89,17 +93,16 @@
         </div>
     </nav>
 
-    
-
-<div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Backdrop with scrolling</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <p>Try scrolling the rest of the page to see this option in action.</p>
-  </div>
-</div>
+    <!-- Offcanvas -->
+    <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions" aria-labelledby="offcanvasWithBothOptionsLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasWithBothOptionsLabel">Backdrop with scrolling</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <p>Try scrolling the rest of the page to see this option in action.</p>
+        </div>
+    </div>
 
     <!-- Canvas -->
     <canvas id="canvas"></canvas>
@@ -231,6 +234,16 @@
             drawGrid(gridSize, true);
             drawPoint(mouse.x, mouse.y);
             requestAnimationFrame(update);
+        }
+
+        // Function to refocus to the center of the grid with scale 1
+        function refocusCanvas() {
+            const centerX = w / 2;
+            const centerY = h / 2;
+            panZoom.x = centerX;
+            panZoom.y = centerY;
+            panZoom.scale = 1; // Set scale to 1
+            panZoom.apply();
         }
     </script>
 </body>
