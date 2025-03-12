@@ -23,41 +23,16 @@
             top: 0;
             left: 0;
             z-index: 1;
-            /* Canvas should be behind the side panel */
         }
 
         /* Navbar styles */
         .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            background-color: #222;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 3;
-            /* Ensure it stays on top of both canvas */
-        }
-
-        .navbar .title {
-            font-size: 20px;
-        }
-
-        /* Content area adjustments to avoid overlap */
-        .content {
-            margin-top: 50px;
-            /* Space for navbar */
-            padding: 20px;
+            z-index: 2;
         }
     </style>
 </head>
 
 <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg bg-body-tertiary" style="height: 85px;">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
@@ -96,9 +71,11 @@
                             data-bs-target="#offcanvasWithBothOptions"
                             aria-controls="offcanvasWithBothOptions">Tools</button>
                     </li>
-                    <!-- New refocus button -->
                     <li class="nav-item">
                         <button class="btn btn-warning mx-3" onclick="refocusCanvas()">Refocus Grid</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-danger mx-3" onclick="clearGrid()">Clear Grid</button>
                     </li>
                     <span class="navbar-text">
                         Stats:
@@ -112,7 +89,6 @@
         </div>
     </nav>
 
-    <!-- Offcanvas -->
     <div class="offcanvas offcanvas-start" data-bs-scroll="true" tabindex="-1" id="offcanvasWithBothOptions"
         aria-labelledby="offcanvasWithBothOptionsLabel">
         <div class="offcanvas-header">
@@ -120,27 +96,141 @@
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body">
-            <p>Try scrolling the rest of the page to see this option in action.</p>
+            <div class="dropdown">
+                <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false" style="width: 100%;">
+                    Add Line
+                </button>
+                <div class="dropdown-menu p-4" style="width: 100%;">
+                    <div class="mb-3">
+                        <label for="lineName" class="form-label">Line Name</label>
+                        <input type="text" class="form-control" id="lineName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="lineCode" class="form-label">Line Code</label>
+                        <input type="text" class="form-control" id="lineCode">
+                    </div>
+                    <div class="mb-3">
+                        <label for="lineColor" class="form-label">Line Color</label>
+                        <input type="color" class="form-control" id="lineColor" value="#000000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Line Type</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="lineType" id="lineTypeUnderground"
+                                value="underground">
+                            <label class="form-check-label" for="lineTypeUnderground">Underground</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="lineType" id="lineTypeGround"
+                                value="ground">
+                            <label class="form-check-label" for="lineTypeGround">Ground</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="lineType" id="lineTypeSuspended"
+                                value="suspended">
+                            <label class="form-check-label" for="lineTypeSuspended">Suspended</label>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="saveLine">Save Line</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Canvas -->
     <canvas id="canvas"></canvas>
+
+    <div id="stationModal" class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Station</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="stationName" class="form-label">Station Name</label>
+                        <input type="text" class="form-control" id="stationName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Station Type (Required)</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="underground" id="undergroundType">
+                            <label class="form-check-label" for="undergroundType">Underground</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="ground" id="groundType">
+                            <label class="form-check-label" for="groundType">Ground</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="suspended" id="suspendedType">
+                            <label class="form-check-label" for="suspendedType">Suspended</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveStation">Save Station</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const ctx = canvas.getContext("2d");
         requestAnimationFrame(update);
-        const mouse = { x: 0, y: 0, button: false, wheel: 0, lastX: 0, lastY: 0, drag: false };
-        const gridLimit = 64;  // max grid lines for static grid
-        const gridSize = 128;  // grid size in screen pixels for adaptive and world pixels for static
-        const scaleRate = 1.02; // Closer to 1 slower rate of change
-        const topLeft = { x: 0, y: 0 };  // holds top left of canvas in world coords.
+        const mouse = { x: 0, y: 0, button: false, wheel: 0, lastX: 0, lastY: 0, drag: false, downX: 0, downY: 0 };
+        const gridLimit = 64;
+        const gridSize = 128;
+        const scaleRate = 1.02;
+        const topLeft = { x: 0, y: 0 };
+        const stations = [];
+        let newStationWorldCoord = null;
+        let selectedStation = null;
+
+        const lines = [];
+
+        document.getElementById('saveLine').addEventListener('click', function () {
+            const name = document.getElementById('lineName').value.trim();
+            const code = document.getElementById('lineCode').value.trim();
+            const color = document.getElementById('lineColor').value;
+            const lineType = document.querySelector('input[name="lineType"]:checked');
+
+            if (!name || !code || !lineType) {
+                alert("Line name, code, and type are required.");
+                return;
+            }
+
+            lines.push({ name: name, code: code, color: color, type: lineType.value, stations: [] });
+
+            // Clear input fields after saving
+            document.getElementById('lineName').value = '';
+            document.getElementById('lineCode').value = '';
+            document.getElementById('lineColor').value = '#000000';
+            document.querySelectorAll('input[name="lineType"]').forEach(radio => radio.checked = false);
+
+            // Optionally, close the dropdown after saving
+            const dropdownButton = document.querySelector('.dropdown-toggle');
+            if (dropdownButton.classList.contains('show')) {
+                dropdownButton.click();
+            }
+        });
+
+        function clearGrid() {
+            stations.length = 0; // Clear the stations array
+        }
 
         function mouseEvents(e) {
             const bounds = canvas.getBoundingClientRect();
             mouse.x = e.pageX - bounds.left - scrollX;
             mouse.y = e.pageY - bounds.top - scrollY;
-            mouse.button = e.type === "mousedown" ? true : e.type === "mouseup" ? false : mouse.button;
+            if (e.type === "mousedown") {
+                mouse.button = true;
+                mouse.downX = mouse.x;
+                mouse.downY = mouse.y;
+            } else if (e.type === "mouseup") {
+                mouse.button = false;
+            }
             if (e.type === "wheel") {
                 mouse.wheel += -e.deltaY;
                 e.preventDefault();
@@ -155,12 +245,12 @@
             y: 0,
             scale: 1,
             apply() { ctx.setTransform(this.scale, 0, 0, this.scale, this.x, this.y) },
-            scaleAt(x, y, sc) {  // x & y are screen coords, not world
+            scaleAt(x, y, sc) {
                 this.scale *= sc;
                 this.x = x - (x - this.x) * sc;
                 this.y = y - (y - this.y) * sc;
             },
-            toWorld(x, y, point = {}) {   // converts from screen coords to world coords
+            toWorld(x, y, point = {}) {
                 const inv = 1 / this.scale;
                 point.x = (x - this.x) * inv;
                 point.y = (y - this.y) * inv;
@@ -197,7 +287,7 @@
                 ctx.moveTo(x, y + i);
                 ctx.lineTo(x + size, y + i);
             }
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // reset the transform so the lineWidth is 1
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.stroke();
         }
 
@@ -211,19 +301,45 @@
             ctx.lineTo(worldCoord.x + 10, worldCoord.y);
             ctx.moveTo(worldCoord.x, worldCoord.y - 10);
             ctx.lineTo(worldCoord.x, worldCoord.y + 10);
-            ctx.setTransform(1, 0, 0, 1, 0, 0); //reset the transform so the lineWidth is 1
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
             ctx.stroke();
+        }
+
+        function drawStation(station) {
+            panZoom.apply();
+            ctx.lineWidth = 2;
+            let color = "black";
+            if (station.types.includes("underground")) {
+                color = "red";
+            } else if (station.types.includes("ground")) {
+                color = "green";
+            } else if (station.types.includes("suspended")) {
+                color = "blue";
+            }
+            ctx.strokeStyle = color;
+            ctx.beginPath();
+            ctx.arc(station.x, station.y, 5, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Display station name
+            ctx.fillStyle = "black";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(station.name, station.x, station.y + 20);
+
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
 
         var w = canvas.width;
         var h = canvas.height;
 
         function update() {
-            ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
-            ctx.globalAlpha = 1;           // reset alpha
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalAlpha = 1;
             if (w !== innerWidth || h !== innerHeight) {
                 w = canvas.width = innerWidth;
-                h = canvas.height = innerHeight - 50; /* Adjust height to account for navbar */
+                h = canvas.height = innerHeight - 50;
             } else {
                 ctx.clearRect(0, 0, w, h);
             }
@@ -234,7 +350,7 @@
                 if (Math.abs(mouse.wheel) < 1) {
                     mouse.wheel = 0;
                 }
-                panZoom.scaleAt(mouse.x, mouse.y, scale); //scale is the change in scale
+                panZoom.scaleAt(mouse.x, mouse.y, scale);
             }
             if (mouse.button) {
                 if (!mouse.drag) {
@@ -250,21 +366,90 @@
             } else if (mouse.drag) {
                 mouse.drag = false;
             }
-            // Always use the adaptive grid mode
             drawGrid(gridSize, true);
             drawPoint(mouse.x, mouse.y);
+
+            stations.forEach(station => {
+                drawStation(station);
+            });
+
             requestAnimationFrame(update);
         }
 
-        // Function to refocus to the center of the grid with scale 1
         function refocusCanvas() {
             const centerX = w / 2;
             const centerY = h / 2;
             panZoom.x = centerX;
             panZoom.y = centerY;
-            panZoom.scale = 1; // Set scale to 1
+            panZoom.scale = 1;
             panZoom.apply();
         }
+
+        canvas.addEventListener('click', function (event) {
+            const distance = Math.sqrt((mouse.x - mouse.downX) ** 2 + (mouse.y - mouse.downY) ** 2);
+            if (distance > 5) return;
+
+            const worldCoord = panZoom.toWorld(event.offsetX, event.offsetY);
+            selectedStation = stations.find(station => Math.sqrt((station.x - worldCoord.x) ** 2 + (station.y - worldCoord.y) ** 2) < 10);
+            if (selectedStation) {
+                document.getElementById('modalTitle').textContent = "Edit Station"; // Change modal title
+                document.getElementById('stationName').value = selectedStation.name;
+                document.getElementById('undergroundType').checked = selectedStation.types.includes("underground");
+                document.getElementById('groundType').checked = selectedStation.types.includes("ground");
+                document.getElementById('suspendedType').checked = selectedStation.types.includes("suspended");
+            } else {
+                document.getElementById('modalTitle').textContent = "Add Station";
+                document.getElementById('stationName').value = "";
+                document.getElementById('undergroundType').checked = false;
+                document.getElementById('groundType').checked = false;
+                document.getElementById('suspendedType').checked = false;
+            }
+            newStationWorldCoord = worldCoord;
+            var stationModal = new bootstrap.Modal(document.getElementById('stationModal'));
+            stationModal.show();
+        });
+
+        document.getElementById('saveStation').addEventListener('click', function () {
+            const name = document.getElementById('stationName').value.trim();
+            if (!name) {
+                alert("Station name is required.");
+                return;
+            }
+
+            const types = [];
+            if (document.getElementById('undergroundType').checked) types.push("underground");
+            if (document.getElementById('groundType').checked) types.push("ground");
+            if (document.getElementById('suspendedType').checked) types.push("suspended");
+
+            if (types.length === 0) {
+                alert("At least one station type must be selected.");
+                return;
+            }
+
+            if (selectedStation) {
+                if (stations.some(station => station.name === name && station !== selectedStation)) {
+                    alert("Station name must be unique.");
+                    return;
+                }
+                selectedStation.name = name;
+                selectedStation.types = types;
+            } else {
+                if (stations.some(station => station.name === name)) {
+                    alert("Station name must be unique.");
+                    return;
+                }
+                stations.push({
+                    x: newStationWorldCoord.x, y: newStationWorldCoord.y,
+                    name: name,
+                    types: types
+                });
+            }
+
+            selectedStation = null;
+            newStationWorldCoord = null;
+            var stationModal = bootstrap.Modal.getInstance(document.getElementById('stationModal'));
+            stationModal.hide();
+        });
     </script>
 </body>
 
