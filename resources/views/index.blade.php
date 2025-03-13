@@ -185,13 +185,14 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" id="deleteStation" style="display: none;">Delete Station</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" id="saveStation">Save Station</button>
                     </div>
                 </div>
             </div>
         </div>
-
+        
         <script src="script.js"></script>
     </body>
 

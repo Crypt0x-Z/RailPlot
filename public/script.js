@@ -6,11 +6,11 @@ const gridLimit = 64;
 const gridSize = 128;
 const scaleRate = 1.02;
 const topLeft = { x: 0, y: 0 };
-const stations = [];
+let stations = [];
 let newStationWorldCoord = null;
 let selectedStation = null;
 
-const lines = [];
+let lines = [];
 
 document.getElementById('saveLine').addEventListener('click', function () {
     const name = document.getElementById('lineName').value.trim();
@@ -36,10 +36,13 @@ document.getElementById('saveLine').addEventListener('click', function () {
     if (dropdownButton.classList.contains('show')) {
         dropdownButton.click();
     }
+
+    document.getElementById("linesNum").innerHTML = lines.length
 });
 
 function clearGrid() {
     stations.length = 0; // Clear the stations array
+    document.getElementById("stationsNum").innerHTML = stations.length;
 }
 
 function mouseEvents(e) {
@@ -208,65 +211,82 @@ panZoom.apply();
 }
 
 canvas.addEventListener('click', function (event) {
-const distance = Math.sqrt((mouse.x - mouse.downX) ** 2 + (mouse.y - mouse.downY) ** 2);
-if (distance > 5) return;const worldCoord = panZoom.toWorld(event.offsetX, event.offsetY);
-selectedStation = stations.find(station => Math.sqrt((station.x - worldCoord.x) ** 2 + (station.y - worldCoord.y) ** 2) < 10);
-if (selectedStation) {
-    document.getElementById('modalTitle').textContent = "Edit Station"; // Change modal title
-    document.getElementById('stationName').value = selectedStation.name;
-    document.getElementById('undergroundType').checked = selectedStation.types.includes("underground");
-    document.getElementById('groundType').checked = selectedStation.types.includes("ground");
-    document.getElementById('suspendedType').checked = selectedStation.types.includes("suspended");
-} else {
-    document.getElementById('modalTitle').textContent = "Add Station";
-    document.getElementById('stationName').value = "";
-    document.getElementById('undergroundType').checked = false;
-    document.getElementById('groundType').checked = false;
-    document.getElementById('suspendedType').checked = false;
-}
-newStationWorldCoord = worldCoord;
-var stationModal = new bootstrap.Modal(document.getElementById('stationModal'));
-stationModal.show();
+    const distance = Math.sqrt((mouse.x - mouse.downX) ** 2 + (mouse.y - mouse.downY) ** 2);
+    if (distance > 5) return;
+    const worldCoord = panZoom.toWorld(event.offsetX, event.offsetY);
+    selectedStation = stations.find(station => Math.sqrt((station.x - worldCoord.x) ** 2 + (station.y - worldCoord.y) ** 2) < 10);
+    if (selectedStation) {
+        document.getElementById('modalTitle').textContent = "Edit Station";
+        document.getElementById('stationName').value = selectedStation.name;
+        document.getElementById('undergroundType').checked = selectedStation.types.includes("underground");
+        document.getElementById('groundType').checked = selectedStation.types.includes("ground");
+        document.getElementById('suspendedType').checked = selectedStation.types.includes("suspended");
+        document.getElementById('deleteStation').style.display = 'block'; // Show delete button
+    } else {
+        document.getElementById('modalTitle').textContent = "Add Station";
+        document.getElementById('stationName').value = "";
+        document.getElementById('undergroundType').checked = false;
+        document.getElementById('groundType').checked = false;
+        document.getElementById('suspendedType').checked = false;
+        document.getElementById('deleteStation').style.display = 'none'; // Hide delete button
+        document.getElementById("stationsNum").innerHTML = stations.length;
+    }
+    newStationWorldCoord = worldCoord;
+    var stationModal = new bootstrap.Modal(document.getElementById('stationModal'));
+    stationModal.show();
 });
 
 document.getElementById('saveStation').addEventListener('click', function () {
-const name = document.getElementById('stationName').value.trim();
-if (!name) {
-alert("Station name is required.");
-return;
-}
-
-const types = [];
-if (document.getElementById('undergroundType').checked) types.push("underground");
-if (document.getElementById('groundType').checked) types.push("ground");
-if (document.getElementById('suspendedType').checked) types.push("suspended");
-
-if (types.length === 0) {
-    alert("At least one station type must be selected.");
-    return;
-}
-
-if (selectedStation) {
-    if (stations.some(station => station.name === name && station !== selectedStation)) {
-        alert("Station name must be unique.");
+    const name = document.getElementById('stationName').value.trim();
+    if (!name) {
+        alert("Station name is required.");
         return;
     }
-    selectedStation.name = name;
-    selectedStation.types = types;
-} else {
-    if (stations.some(station => station.name === name)) {
-        alert("Station name must be unique.");
+
+    const types = [];
+    if (document.getElementById('undergroundType').checked) types.push("underground");
+    if (document.getElementById('groundType').checked) types.push("ground");
+    if (document.getElementById('suspendedType').checked) types.push("suspended");
+
+    if (types.length === 0) {
+        alert("At least one station type must be selected.");
         return;
     }
-    stations.push({
-        x: newStationWorldCoord.x, y: newStationWorldCoord.y,
-        name: name,
-        types: types
-    });
-}
 
-selectedStation = null;
-newStationWorldCoord = null;
-var stationModal = bootstrap.Modal.getInstance(document.getElementById('stationModal'));
-stationModal.hide();
+    if (selectedStation) {
+        if (stations.some(station => station.name === name && station !== selectedStation)) {
+            alert("Station name must be unique.");
+            return;
+        }
+        selectedStation.name = name;
+        selectedStation.types = types;
+    } else {
+        if (stations.some(station => station.name === name)) {
+            alert("Station name must be unique.");
+            return;
+        }
+        stations.push({
+            x: newStationWorldCoord.x, y: newStationWorldCoord.y,
+            name: name,
+            types: types
+        });
+
+        document.getElementById('stationsNum').innerHTML = stations.length;
+    }
+
+    selectedStation = null;
+    newStationWorldCoord = null;
+    var stationModal = bootstrap.Modal.getInstance(document.getElementById('stationModal'));
+    stationModal.hide();
+});
+
+document.getElementById('deleteStation').addEventListener('click', function () {
+    if (selectedStation) {
+        stations = stations.filter(station => station !== selectedStation);
+        selectedStation = null;
+        newStationWorldCoord = null;
+        document.getElementById('stationsNum').innerHTML = stations.length;
+        var stationModal = bootstrap.Modal.getInstance(document.getElementById('stationModal'));
+        stationModal.hide();
+    }
 });
