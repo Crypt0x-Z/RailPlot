@@ -155,7 +155,6 @@ function drawPoint(x, y) {
     const worldCoord = panZoom.toWorld(x, y);
     panZoom.apply();
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "red";
     ctx.beginPath();
     ctx.moveTo(worldCoord.x - 10, worldCoord.y);
     ctx.lineTo(worldCoord.x + 10, worldCoord.y);
@@ -171,8 +170,8 @@ function drawStation(station) {
 
     // Define colors for each type
     const typeColors = {
-        ground: "red",
-        underground: "green",
+        ground: "yellow",
+        underground: "red",
         suspended: "blue"
     };
 
@@ -419,3 +418,53 @@ canvas.addEventListener('click', function (event) {
             .catch(error => console.error("Error deleting station:", error));
     });
     
+
+    var addLineModal = new bootstrap.Modal(document.getElementById('addLineModal'));
+    var addLineBtn = document.getElementById('addLineBtn');
+
+    // Open the add line modal
+    addLineBtn.onclick = function() {
+        addLineModal.show();
+    };
+
+    // Add station input
+    addStationBtn.onclick = function() {
+        console.log(stations)
+        var newStationInput = document.createElement('select');
+        newStationInput.className = 'form-select stationInput';
+        newStationInput.name = 'stationInput[]';
+        
+        for(var i = 0; i <= stations.length; i++){
+            console.log(stations[i])
+            let stationProperty = Object.values(stations[i]);
+            console.log(stationProperty)
+            /*for (var j = 0; j <= stations[i].length; j++){
+                newStationInput.innerHTML += `<option value="station1">` + stationProperty + `</option>`;
+            }*/
+            
+        }
+        document.getElementById('stationInputs').appendChild(newStationInput);
+
+        
+    };
+
+    // Submit line data
+    submitLineBtn.onclick = function() {
+        var lineName = document.getElementById('lineName').value;
+        var lineCode = document.getElementById('lineCode').value;
+        var lineColor = document.getElementById('lineColor').value;
+        var lineType = document.getElementById('lineType').value;
+        var stationInputsArray = [];
+        var stationSelects = document.getElementsByClassName('stationInput');
+        for (var i = 0; i < stationSelects.length; i++) {
+            stationInputsArray.push(stationSelects[i].value);
+        }
+
+        console.log('Line Name:', lineName);
+        console.log('Line Code:', lineCode);
+        console.log('Line Color:', lineColor);
+        console.log('Line Type:', lineType);
+        console.log('Stations:', stationInputsArray);
+
+        addLineModal.hide();
+    };

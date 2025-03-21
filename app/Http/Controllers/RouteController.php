@@ -9,7 +9,10 @@ class RouteController extends Controller
 {
     public function index()
     {
-        return Route::all();
+        $routes = Route::all();
+        return view("index", compact("routes"));
+        
+
     }
 
     public function store(Request $request)

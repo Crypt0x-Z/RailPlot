@@ -11,8 +11,9 @@ class StationController extends Controller
     /** List all stations */
     public function index()
     {
-        $stations = Station::all();
-        return response()->json($stations);
+        $stations = Station::all(); 
+        return view("index", compact("stations"));
+        
     }
 
     /** Create a new station */
@@ -85,7 +86,6 @@ class StationController extends Controller
         return response()->json(['message' => 'All stations deleted successfully.']);
     } catch (\Exception $e) {
         // Log the error
-        \Log::error('Error deleting stations:', ['exception' => $e]);
         return response()->json(['error' => 'Error deleting stations.'], 500);
     }
 }

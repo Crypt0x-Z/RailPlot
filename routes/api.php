@@ -25,3 +25,9 @@ Route::delete('/stations/clear', [StationController::class, 'clearAllStations'])
     Route::apiResource('stations', StationController::class);
     Route::apiResource('routes', RouteController::class);
 
+
+
+Route::get('routes', [RouteController::class, "index"])->name("routes.index");
+Route::get('routes', [RouteController::class, "store"])->name("routes.store");
+Route::get('routes', [RouteController::class, "update"])->name("routes.update");
+Route::get('routes', [RouteController::class, "destroy"])->name("routes.destroy");
