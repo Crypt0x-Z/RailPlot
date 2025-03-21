@@ -11,8 +11,17 @@ Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->middleware('auth:sanctum');
 
-Route::middleware(['auth:sanctum'])->group(function () {
+//No authentication for now
+// Route::middleware(['auth:sanctum'])->group(function () {
+//     Route::apiResource('trains', TrainController::class);
+//     Route::apiResource('stations', StationController::class);
+//     Route::apiResource('routes', RouteController::class);
+// });
+
+
+Route::delete('/stations/clear', [StationController::class, 'clearAllStations'])->name('stations.clear');
+
     Route::apiResource('trains', TrainController::class);
     Route::apiResource('stations', StationController::class);
     Route::apiResource('routes', RouteController::class);
-});
+

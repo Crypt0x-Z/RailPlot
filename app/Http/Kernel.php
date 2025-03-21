@@ -32,9 +32,10 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
+        'cors' => \App\Http\Middleware\Cors::class,
 
         'api' => [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \App\Http\Middleware\Cors::class, // Ensure CORS is applied
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

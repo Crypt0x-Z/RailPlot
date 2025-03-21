@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
     <html lang="en">
 
     <head>
@@ -11,6 +11,7 @@
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
         <link rel="stylesheet" href="style.css">
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     </head>
 
     <body>
@@ -171,15 +172,15 @@
                         <div class="mb-3">
                             <label class="form-label">Station Type (Required)</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="underground" id="undergroundType">
+                                <input class="form-check-input" type="checkbox" name="stationType" value="underground" id="undergroundType">
                                 <label class="form-check-label" for="undergroundType">Underground</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="ground" id="groundType">
+                                <input class="form-check-input" type="checkbox" name="stationType" value="ground" id="groundType">
                                 <label class="form-check-label" for="groundType">Ground</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="suspended" id="suspendedType">
+                                <input class="form-check-input" type="checkbox" name="stationType" value="suspended" id="suspendedType">
                                 <label class="form-check-label" for="suspendedType">Suspended</label>
                             </div>
                         </div>
@@ -193,7 +194,7 @@
             </div>
         </div>
         
-        <script src="script.js"></script>
+        <script src="{{ asset('js/script.js') }}"></script>
     </body>
 
     </html>
