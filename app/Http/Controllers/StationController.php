@@ -11,8 +11,8 @@ class StationController extends Controller
     /** List all stations */
     public function index()
     {
-        $stations = Station::all(); 
-        return view("index", compact("stations"));
+        $stations = Station::all();
+        return response()->json($stations);
         
     }
 
