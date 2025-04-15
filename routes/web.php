@@ -1,12 +1,36 @@
 <?php
 
-use App\Http\Controllers\RouteController;
-use App\Http\Controllers\StationController;
-use App\Models\Station;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 
-Route::get('/', [RouteController::class,'index']);
+Route::middleware(['auth', 'is_admin'])->group(function () {
+    Route::get('/admin', function () {
+        $users = User::all();
+        return view('admin.dashboard', compact('users'));
+    })->name('admin.dashboard');
 
-Route::get('/index', [StationController::class, "index"])->name('index');
+    Route::delete('/admin/users/{id}', function ($id) {
+        $user = User::findOrFail($id);
+        $user->delete();
+        return redirect()->route('admin.dashboard')->with('success', 'User deleted');
+    })->name('admin.users.delete');
+});
+
+
+
+// Regular dashboard
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+// Main station editor
+Route::get('/', function () {
+    return view('index');
+})->middleware(['auth']);
+
+// Remove profile/edit for now
+Route::get('/profile', function () {
+    return redirect('/');
+})->name('profile.edit');
 
 require __DIR__.'/auth.php';
